@@ -22,6 +22,13 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      - name: Maximize build disk space
+        uses: easimon/maximize-build-space@v6
+        with:
+          remove-dotnet: true
+          remove-android: true
+          remove-haskell: true
+        
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
       - name: build
