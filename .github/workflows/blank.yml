@@ -23,12 +23,19 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-      - name: build
-        shell: cmd
+      - name: Clone To C:/
         run: |
+          cd C:/
+          git clone --depth=1 https://github.com/axojhf/mabs.git m
+      - name: build
+        run: |
+          cd C:/m
           ./media-autobuild_suite.bat
       - uses: actions/upload-artifact@v3
         with:
-          name: Release-bin-video
-          path: ./local64/bin-video
+          name: bin-video
+          path: C:/m/local64/bin-video
+      - uses: actions/upload-artifact@v3
+        with:
+          name: bin-audio
+          path: C:/m/local64/bin-audio
