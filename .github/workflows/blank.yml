@@ -27,6 +27,12 @@ jobs:
         run: |
           cd C:/
           git clone --depth=1 https://github.com/axojhf/mabs.git m -b clang
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            C:/m/local64
+          key: Clang-local64-cache
       - name: build
         run: |
           cd C:/m
