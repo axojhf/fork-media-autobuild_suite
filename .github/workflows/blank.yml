@@ -26,7 +26,7 @@ jobs:
       - name: Clone To C:/
         run: |
           cd C:/
-          git clone --depth=1 https://github.com/axojhf/mabs.git m
+          git clone --depth=1 https://github.com/axojhf/mabs.git m -b clang
       - name: build
         run: |
           cd C:/m
