@@ -26,7 +26,7 @@ jobs:
       - name: Clone To C:/
         run: |
           cd C:/
-          git clone --depth=1 https://github.com/axojhf/mabs.git m
+          git clone --depth=1 https://github.com/axojhf/mabs.git m -b step
       - name: Cache
         uses: actions/cache@v3
         with:
@@ -47,7 +47,7 @@ jobs:
       - name: Clone To C:/
         run: |
           cd C:/
-          git clone --depth=1 https://github.com/axojhf/mabs.git m
+          git clone --depth=1 https://github.com/axojhf/mabs.git m -b step
       - name: Cache
         uses: actions/cache@v3
         with:
