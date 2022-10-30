@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: normal
 
 # Controls when the workflow will run
 on:
@@ -27,6 +27,12 @@ jobs:
         run: |
           cd C:/
           git clone --depth=1 https://github.com/axojhf/mabs.git m
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            C:/m/local64
+          key: ${{ runner.os }}-primes
       - name: build
         run: |
           cd C:/m
