@@ -1812,7 +1812,8 @@ if %noMintty%==y (
     --login /build/media-suite_compile.sh %compileArgs%
 )
 color
-exit /B %ERRORLEVEL%
+@REM exit /B %ERRORLEVEL%
+exit /B 0
 endlocal
 goto :EOF
 
