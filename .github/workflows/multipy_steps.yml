@@ -59,6 +59,26 @@ jobs:
           cd C:/m
           cp step1.ini build/media-autobuild_suite.ini
           ./media-autobuild_suite.bat
+  #如果build0运行完成，则运行build1
+  clang-build2:
+    needs: clang-build1
+    runs-on: windows-2019
+    steps:
+      - name: Clone To C:/
+        run: |
+          cd C:/
+          git clone --depth=1 https://github.com/axojhf/mabs.git m -b clang-step
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            C:/m/local64
+          key: clang-step-cache
+      - name: build
+        run: |
+          cd C:/m
+          cp step2.ini build/media-autobuild_suite.ini
+          ./media-autobuild_suite.bat
       - uses: actions/upload-artifact@v3
         with:
           name: bin-video
