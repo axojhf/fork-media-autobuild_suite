@@ -44,6 +44,22 @@ jobs:
           cd C:/m
           cp step0.ini build/media-autobuild_suite.ini
           ./media-autobuild_suite.bat
+      - name: Del Unnecessary
+        run: |
+          if (Test-Path C:\m\build\rav1e-git\target) { rm -r -Force C:\m\build\rav1e-git\target }
+          if (Test-Path C:\m\build\ripgrep-git\target) { rm -r -Force C:\m\build\ripgrep-git\target }
+          if (Test-Path C:\m\build\cargo-c-git\target) { rm -r -Force C:\m\build\cargo-c-git\target }
+          if (Test-Path C:\m\build\AMF-git\Thirdparty) { rm -r -Force C:\m\build\AMF-git\Thirdparty }
+          if (Test-Path C:\m\build\aom-git\build-64bit) { rm -r -Force C:\m\build\aom-git\build-64bit }
+          if (Test-Path C:\m\build\flite-git\bin) { rm -r -Force C:\m\build\flite-git\bin }
+          if (Test-Path C:\m\build\flite-git\build) { rm -r -Force C:\m\build\flite-git\build }
+          if (Test-Path C:\m\build\gpac-git\build-64bit) { rm -r -Force C:\m\build\gpac-git\build-64bit }
+          if (Test-Path C:\m\build\rav1e-git\install-64bit) { rm -r -Force C:\m\build\rav1e-git\install-64bit }
+          if (Test-Path C:\m\build\highway-git\build-64bit) { rm -r -Force C:\m\build\highway-git\build-64bit }
+          if (Test-Path C:\m\build\frei0r-git\build-64bit) { rm -r -Force C:\m\build\frei0r-git\build-64bit }
+          if (Test-Path C:\m\build\vpx-git\build-64bit) { rm -r -Force C:\m\build\vpx-git\build-64bit }
+          if (Test-Path C:\m\build\codec2-git\build-64bit) { rm -r -Force C:\m\build\codec2-git\build-64bit }
+          if (Test-Path C:\m\build\libavif-git\build-64bit) { rm -r -Force C:\m\build\libavif-git\build-64bit }
 
   #如果build0运行完成，则运行build1
   build1:
@@ -79,3 +95,19 @@ jobs:
         with:
           name: bin-audio
           path: C:/m/local64/bin-audio
+      - name: Del Unnecessary
+        run: |
+          if (Test-Path C:\m\build\rav1e-git\target) { rm -r -Force C:\m\build\rav1e-git\target }
+          if (Test-Path C:\m\build\ripgrep-git\target) { rm -r -Force C:\m\build\ripgrep-git\target }
+          if (Test-Path C:\m\build\cargo-c-git\target) { rm -r -Force C:\m\build\cargo-c-git\target }
+          if (Test-Path C:\m\build\AMF-git\Thirdparty) { rm -r -Force C:\m\build\AMF-git\Thirdparty }
+          if (Test-Path C:\m\build\aom-git\build-64bit) { rm -r -Force C:\m\build\aom-git\build-64bit }
+          if (Test-Path C:\m\build\flite-git\bin) { rm -r -Force C:\m\build\flite-git\bin }
+          if (Test-Path C:\m\build\flite-git\build) { rm -r -Force C:\m\build\flite-git\build }
+          if (Test-Path C:\m\build\gpac-git\build-64bit) { rm -r -Force C:\m\build\gpac-git\build-64bit }
+          if (Test-Path C:\m\build\rav1e-git\install-64bit) { rm -r -Force C:\m\build\rav1e-git\install-64bit }
+          if (Test-Path C:\m\build\highway-git\build-64bit) { rm -r -Force C:\m\build\highway-git\build-64bit }
+          if (Test-Path C:\m\build\frei0r-git\build-64bit) { rm -r -Force C:\m\build\frei0r-git\build-64bit }
+          if (Test-Path C:\m\build\vpx-git\build-64bit) { rm -r -Force C:\m\build\vpx-git\build-64bit }
+          if (Test-Path C:\m\build\codec2-git\build-64bit) { rm -r -Force C:\m\build\codec2-git\build-64bit }
+          if (Test-Path C:\m\build\libavif-git\build-64bit) { rm -r -Force C:\m\build\libavif-git\build-64bit }
