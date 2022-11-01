@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Multipy Steps
+name: Test
 
 # Controls when the workflow will run
 on:
@@ -16,7 +16,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build0:
+  Test0:
     # The type of runner that the job will run on
     runs-on: windows-2019
 
@@ -36,34 +36,38 @@ jobs:
       - name: build
         run: |
           cd C:/m
-          cp step0.ini build/media-autobuild_suite.ini
-          ./media-autobuild_suite.bat
+          cd local64
+          ls
+          cd lib
+          ls
+        # cp step0.ini build/media-autobuild_suite.ini
+        # ./media-autobuild_suite.bat
 
-  #如果build0运行完成，则运行build1
-  build1:
-    needs: build0
-    runs-on: windows-2019
-    steps:
-      - name: Clone To C:/
-        run: |
-          cd C:/
-          git clone --depth=1 https://github.com/axojhf/mabs.git m -b step
-      - name: Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            C:/m/local64
-          key: mingw-step-cache
-      - name: build
-        run: |
-          cd C:/m
-          cp step1.ini build/media-autobuild_suite.ini
-          ./media-autobuild_suite.bat
-      - uses: actions/upload-artifact@v3
-        with:
-          name: bin-video
-          path: C:/m/local64/bin-video
-      - uses: actions/upload-artifact@v3
-        with:
-          name: bin-audio
-          path: C:/m/local64/bin-audio
+  # #如果build0运行完成，则运行build1
+  # build1:
+  #   needs: build0
+  #   runs-on: windows-2019
+  #   steps:
+  #     - name: Clone To C:/
+  #       run: |
+  #         cd C:/
+  #         git clone --depth=1 https://github.com/axojhf/mabs.git m -b step
+  #     - name: Cache
+  #       uses: actions/cache@v3
+  #       with:
+  #         path: |
+  #           C:/m/local64
+  #         key: mingw-step-cache
+  #     - name: build
+  #       run: |
+  #         cd C:/m
+  #         cp step1.ini build/media-autobuild_suite.ini
+  #         ./media-autobuild_suite.bat
+  #     - uses: actions/upload-artifact@v3
+  #       with:
+  #         name: bin-video
+  #         path: C:/m/local64/bin-video
+  #     - uses: actions/upload-artifact@v3
+  #       with:
+  #         name: bin-audio
+  #         path: C:/m/local64/bin-audio
