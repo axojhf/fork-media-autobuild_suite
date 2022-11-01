@@ -110,4 +110,4 @@
 --enable-opengl
 --enable-cuda-nvcc
 --enable-libnpp
---enable-libopenh264
+#--enable-libopenh264
