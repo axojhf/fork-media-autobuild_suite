@@ -27,12 +27,18 @@ jobs:
         run: |
           cd C:/
           git clone --depth=1 https://github.com/axojhf/mabs.git m -b clang-step
-      - name: Cache
+      - name: Cache Local64
         uses: actions/cache@v3
         with:
           path: |
             C:/m/local64
-          key: clang-step-cache
+          key: clang-step-local64-cache
+      - name: Cache Build
+        uses: actions/cache@v3
+        with:
+          path: |
+            C:/m/build
+          key: clang-step-build-cache    
       - name: build
         run: |
           cd C:/m
@@ -48,12 +54,18 @@ jobs:
         run: |
           cd C:/
           git clone --depth=1 https://github.com/axojhf/mabs.git m -b clang-step
-      - name: Cache
+      - name: Cache Local64
         uses: actions/cache@v3
         with:
           path: |
             C:/m/local64
-          key: clang-step-cache
+          key: clang-step-local64-cache
+      - name: Cache Build
+        uses: actions/cache@v3
+        with:
+          path: |
+            C:/m/build
+          key: clang-step-build-cache
       - name: build
         run: |
           cd C:/m
@@ -68,12 +80,18 @@ jobs:
         run: |
           cd C:/
           git clone --depth=1 https://github.com/axojhf/mabs.git m -b clang-step
-      - name: Cache
+      - name: Cache Local64
         uses: actions/cache@v3
         with:
           path: |
             C:/m/local64
-          key: clang-step-cache
+          key: clang-step-local64-cache
+      - name: Cache Build
+        uses: actions/cache@v3
+        with:
+          path: |
+            C:/m/build
+          key: clang-step-build-cache
       - name: build
         run: |
           cd C:/m
