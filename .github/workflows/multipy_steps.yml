@@ -19,7 +19,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            C:\m\local64
+            C:/m/local64
           key: mingw-step-cache
       - name: build
         run: |
