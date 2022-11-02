@@ -127,6 +127,9 @@ jobs:
             C:/m/build
           key: clang-step-build-cache-full
           restore-keys: clang-step-build-cache
+      - name: Del tesseract git
+        run: |
+          if (Test-Path C:\m\build\tesseract-git) { rm -r -Force C:\m\build\tesseract-git }
       - name: build
         run: |
           cd C:/m
