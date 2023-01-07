@@ -149,7 +149,8 @@ set iniOptions=arch license2 vpx2 x2643 x2652 other265 flac fdkaac mediainfo ^
 soxB ffmpegB2 ffmpegUpdate ffmpegChoice mp4box rtmpdump mplayer2 mpv cores deleteSource ^
 strip pack logging bmx standalone updateSuite aom faac exhale ffmbc curl cyanrip2 ^
 rav1e ripgrep dav1d libavif vvc uvg266 jq dssim avs2 timeStamp noMintty ccache ^
-svthevc svtav1 svtvp9 xvc jo vlc CC jpegxl autouploadlogs vvenc vvdec ffmpegPath
+svthevc svtav1 svtvp9 xvc jo vlc CC jpegxl vvenc vvdec ffmpegPath
+@rem re-add autouploadlogs if we find some way to upload to github directly instead
 
 set deleteIni=0
 set ini=%build%\media-autobuild_suite.ini
@@ -159,19 +160,28 @@ for %%a in (%iniOptions%) do set %%aINI=0
 
 if exist %ini% (
     rem Set INI options to what's found in the inifile
-    for %%a in (%iniOptions%) do for /F "tokens=2 delims==" %%b in ('findstr %%a %ini%') do set %%aINI=%%b
+    echo.foreach ($option in $env:iniOptions.split(" "^)^) { ^
+        $m = Select-String -Path $env:ini -CaseSensitive -SimpleMatch -Pattern $option; ^
+        if ($null -ne $m^) { ^
+            Write-Output "set `"${option}INI^=$($m.Line.Split("="^, 2^)[1]^)`"" ^
+        } else { ^
+            Write-Output "set `"${option}INI^=0^`"" ^
+        } ^
+    } | powershell -NoProfile -Command - > %build%\options.bat
+    call %build%\options.bat
+    del %build%\options.bat
 ) else set deleteIni=1
 
 setlocal EnableDelayedExpansion
 rem Check if any of the *INI options are still unset (0)
-for %%a in (%iniOptions%) do if [!%%aINI!]==[0] set deleteIni=1 && goto :endINIcheck
+for %%a in (%iniOptions%) do if [0]==[!%%aINI!] set deleteIni=1 && goto :endINIcheck
 :endINIcheck
 endlocal & set deleteIni=%deleteIni%
 
 if %deleteINI%==1 echo.[compiler list] >"%ini%"
 
 :selectSystem
-if %archINI%==0 (
+if [0]==[%archINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -193,7 +203,7 @@ if %buildEnv% GTR 3 GOTO selectSystem
 if %deleteINI%==1 echo.arch=^%buildEnv%>>%ini%
 
 :ffmpeglicense
-if %license2INI%==0 (
+if [0]==[%license2INI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -231,7 +241,7 @@ if %ffmpegLicense% GTR 5 GOTO ffmpeglicense
 if %deleteINI%==1 echo.license2=^%ffmpegLicense%>>%ini%
 
 :standalone
-if %standaloneINI%==0 (
+if [0]==[%standaloneINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -252,7 +262,7 @@ if %buildstandalone% GTR 2 GOTO standalone
 if %deleteINI%==1 echo.standalone=^%buildstandalone%>>%ini%
 
 :vpx
-if %vpx2INI%==0 (
+if [0]==[%vpx2INI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -274,7 +284,7 @@ if %buildvpx% GTR 2 GOTO vpx
 if %deleteINI%==1 echo.vpx2=^%buildvpx%>>%ini%
 
 :aom
-if %aomINI%==0 (
+if [0]==[%aomINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -296,7 +306,7 @@ if %buildaom% GTR 2 GOTO aom
 if %deleteINI%==1 echo.aom=^%buildaom%>>%ini%
 
 :rav1e
-if %rav1eINI%==0 (
+if [0]==[%rav1eINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -316,7 +326,7 @@ if %buildrav1e% GTR 2 GOTO rav1e
 if %deleteINI%==1 echo.rav1e=^%buildrav1e%>>%ini%
 
 :dav1d
-if %dav1dINI%==0 (
+if [0]==[%dav1dINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -338,7 +348,7 @@ if %builddav1d% GTR 2 GOTO dav1d
 if %deleteINI%==1 echo.dav1d=^%builddav1d%>>%ini%
 
 :libavif
-if %libavifINI%==0 (
+if [0]==[%libavifINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -361,7 +371,7 @@ if %buildlibavif% GTR 2 GOTO libavif
 if %deleteINI%==1 echo.libavif=^%buildlibavif%>>%ini%
 
 :jpegxl
-if %jpegxlINI%==0 (
+if [0]==[%jpegxlINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -381,7 +391,7 @@ if %buildjpegxl% GTR 2 GOTO jpegxl
 if %deleteINI%==1 echo.jpegxl=^%buildjpegxl%>>%ini%
 
 :x264
-if %x2643INI%==0 (
+if [0]==[%x2643INI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -413,7 +423,7 @@ if %buildx264% GTR 7 GOTO x264
 if %deleteINI%==1 echo.x2643=^%buildx264%>>%ini%
 
 :x265
-if %x2652INI%==0 (
+if [0]==[%x2652INI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -445,7 +455,7 @@ if %buildx265% GTR 7 GOTO x265
 if %deleteINI%==1 echo.x2652=^%buildx265%>>%ini%
 
 :other265
-if %other265INI%==0 (
+if [0]==[%other265INI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -465,7 +475,7 @@ if %buildother265% GTR 2 GOTO other265
 if %deleteINI%==1 echo.other265=^%buildother265%>>%ini%
 
 :svthevc
-if %svthevcINI%==0 (
+if [0]==[%svthevcINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -485,7 +495,7 @@ if %buildsvthevc% GTR 2 GOTO svthevc
 if %deleteINI%==1 echo.svthevc=^%buildsvthevc%>>%ini%
 
 :xvc
-if %xvcINI%==0 (
+if [0]==[%xvcINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -507,7 +517,7 @@ if %buildxvc% GTR 2 GOTO xvc
 if %deleteINI%==1 echo.xvc=^%buildxvc%>>%ini%
 
 :vvc
-if %vvcINI%==0 (
+if [0]==[%vvcINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -527,7 +537,7 @@ if %buildvvc% GTR 2 GOTO vvc
 if %deleteINI%==1 echo.vvc=^%buildvvc%>>%ini%
 
 :uvg266
-if %uvg266INI%==0 (
+if [0]==[%uvg266INI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -547,7 +557,7 @@ if %builduvg266% GTR 2 GOTO uvg266
 if %deleteINI%==1 echo.uvg266=^%builduvg266%>>%ini%
 
 :vvenc
-if %vvencINI%==0 (
+if [0]==[%vvencINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -567,7 +577,7 @@ if %buildvvenc% GTR 2 GOTO vvenc
 if %deleteINI%==1 echo.vvenc=^%buildvvenc%>>%ini%
 
 :vvdec
-if %vvdecINI%==0 (
+if [0]==[%vvdecINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -587,7 +597,7 @@ if %buildvvdec% GTR 2 GOTO vvdec
 if %deleteINI%==1 echo.vvdec=^%buildvvdec%>>%ini%
 
 :svtav1
-if %svtav1INI%==0 (
+if [0]==[%svtav1INI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -610,7 +620,7 @@ if %buildsvtav1% GTR 2 GOTO svtav1
 if %deleteINI%==1 echo.svtav1=^%buildsvtav1%>>%ini%
 
 :svtvp9
-if %svtvp9INI%==0 (
+if [0]==[%svtvp9INI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -633,7 +643,7 @@ if %buildsvtvp9% GTR 2 GOTO svtvp9
 if %deleteINI%==1 echo.svtvp9=^%buildsvtvp9%>>%ini%
 
 :flac
-if %flacINI%==0 (
+if [0]==[%flacINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -653,7 +663,7 @@ if %buildflac% GTR 2 GOTO flac
 if %deleteINI%==1 echo.flac=^%buildflac%>>%ini%
 
 :fdkaac
-if %fdkaacINI%==0 (
+if [0]==[%fdkaacINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -673,7 +683,7 @@ if %buildfdkaac% GTR 2 GOTO fdkaac
 if %deleteINI%==1 echo.fdkaac=^%buildfdkaac%>>%ini%
 
 :faac
-if %faacINI%==0 (
+if [0]==[%faacINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -693,7 +703,7 @@ if %buildfaac% GTR 2 GOTO faac
 if %deleteINI%==1 echo.faac=^%buildfaac%>>%ini%
 
 :exhale
-if %exhaleINI%==0 (
+if [0]==[%exhaleINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -715,7 +725,7 @@ if %buildexhale% GTR 2 GOTO exhale
 if %deleteINI%==1 echo.exhale=^%buildexhale%>>%ini%
 
 :mediainfo
-if %mediainfoINI%==0 (
+if [0]==[%mediainfoINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -735,7 +745,7 @@ if %buildmediainfo% GTR 2 GOTO mediainfo
 if %deleteINI%==1 echo.mediainfo=^%buildmediainfo%>>%ini%
 
 :sox
-if %soxBINI%==0 (
+if [0]==[%soxBINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -755,7 +765,7 @@ if %buildsox% GTR 2 GOTO sox
 if %deleteINI%==1 echo.soxB=^%buildsox%>>%ini%
 
 :ffmpeg
-if %ffmpegB2INI%==0 (
+if [0]==[%ffmpegB2INI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -792,7 +802,7 @@ if %deleteINI%==1 echo.ffmpegB2=^%buildffmpeg%>>%ini%
 set defaultFFmpegPath=https://git.ffmpeg.org/ffmpeg.git
 
 :ffmpegPath
-if %ffmpegPathINI%==0 (
+if [0]==[%ffmpegPathINI%] (
     set ffmpegPath=%defaultFFmpegPath%
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
@@ -824,7 +834,7 @@ if exist %resolvePath% (
 )
 endlocal & set "ffmpegPath=%ffmpegPath%"
 
-if not %ffmpegPath%==%defaultFFmpegPath% (
+if not [%defaultFFmpegPath%]==[%ffmpegPath%] (
     echo -------------------------------------------------------------------------------
     echo.
     echo. Using ffmpeg path: %ffmpegPath%
@@ -833,7 +843,7 @@ if not %ffmpegPath%==%defaultFFmpegPath% (
 )
 
 :ffmpegUp
-if %ffmpegUpdateINI%==0 (
+if [0]==[%ffmpegUpdateINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -858,7 +868,7 @@ if %buildffmpegUp% GTR 3 GOTO ffmpegUp
 if %deleteINI%==1 echo.ffmpegUpdate=^%buildffmpegUp%>>%ini%
 
 :ffmpegChoice
-if %ffmpegChoiceINI%==0 (
+if [0]==[%ffmpegChoiceINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -940,7 +950,7 @@ if %buildffmpegChoice% GTR 4 GOTO ffmpegChoice
 if %deleteINI%==1 echo.ffmpegChoice=^%buildffmpegChoice%>>%ini%
 
 :mp4boxStatic
-if %mp4boxINI%==0 (
+if [0]==[%mp4boxINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -960,7 +970,7 @@ if %buildMp4box% GTR 2 GOTO mp4boxStatic
 if %deleteINI%==1 echo.mp4box=^%buildMp4box%>>%ini%
 
 :rtmpdump
-if %rtmpdumpINI%==0 (
+if [0]==[%rtmpdumpINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -980,7 +990,7 @@ if %buildrtmpdump% GTR 2 GOTO rtmpdump
 if %deleteINI%==1 echo.rtmpdump=^%buildrtmpdump%>>%ini%
 
 :mplayer
-if %mplayer2INI%==0 (
+if [0]==[%mplayer2INI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1006,7 +1016,7 @@ if %buildmplayer% GTR 2 GOTO mplayer
 if %deleteINI%==1 echo.mplayer2=^%buildmplayer%>>%ini%
 
 :mpv
-if %mpvINI%==0 (
+if [0]==[%mpvINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1029,7 +1039,7 @@ if %buildmpv% GTR 2 GOTO mpv
 if %deleteINI%==1 echo.mpv=^%buildmpv%>>%ini%
 
 :vlc
-if %vlcINI%==0 (
+if [0]==[%vlcINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1053,7 +1063,7 @@ if %buildvlc% GTR 2 GOTO vlc
 if %deleteINI%==1 echo.vlc=^%buildvlc%>>%ini%
 
 :bmx
-if %bmxINI%==0 (
+if [0]==[%bmxINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1073,7 +1083,7 @@ if %buildbmx% GTR 2 GOTO bmx
 if %deleteINI%==1 echo.bmx=^%buildbmx%>>%ini%
 
 :curl
-if %curlINI%==0 (
+if [0]==[%curlINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1106,7 +1116,7 @@ if %buildcurl% GTR 7 GOTO curl
 if %deleteINI%==1 echo.curl=^%buildcurl%>>%ini%
 
 :ffmbc
-if %ffmbcINI%==0 (
+if [0]==[%ffmbcINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1133,7 +1143,7 @@ if %buildffmbc% GTR 2 GOTO ffmbc
 if %deleteINI%==1 echo.ffmbc=^%buildffmbc%>>%ini%
 
 :cyanrip
-if %cyanrip2INI%==0 (
+if [0]==[%cyanrip2INI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1153,7 +1163,7 @@ if %buildcyanrip% GTR 2 GOTO cyanrip
 if %deleteINI%==1 echo.cyanrip2=^%buildcyanrip%>>%ini%
 
 :ripgrep
-if %ripgrepINI%==0 (
+if [0]==[%ripgrepINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1173,7 +1183,7 @@ if %buildripgrep% GTR 2 GOTO ripgrep
 if %deleteINI%==1 echo.ripgrep=^%buildripgrep%>>%ini%
 
 :jq
-if %jqINI%==0 (
+if [0]==[%jqINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1193,7 +1203,7 @@ if %buildjq% GTR 2 GOTO jq
 if %deleteINI%==1 echo.jq=^%buildjq%>>%ini%
 
 :jo
-if %joINI%==0 (
+if [0]==[%joINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1213,7 +1223,7 @@ if %buildjo% GTR 2 GOTO jo
 if %deleteINI%==1 echo.jo=^%buildjo%>>%ini%
 
 :dssim
-if %dssimINI%==0 (
+if [0]==[%dssimINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1233,7 +1243,7 @@ if %builddssim% GTR 2 GOTO dssim
 if %deleteINI%==1 echo.dssim=^%builddssim%>>%ini%
 
 :avs2
-if %avs2INI%==0 (
+if [0]==[%avs2INI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1255,7 +1265,7 @@ if %buildavs2% GTR 2 GOTO avs2
 if %deleteINI%==1 echo.avs2=^%buildavs2%>>%ini%
 
 :CC
-if %CCINI%==0 (
+if [0]==[%CCINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1278,7 +1288,7 @@ if %deleteINI%==1 echo.CC=^%buildCC%>>%ini%
 
 :numCores
 if %NUMBER_OF_PROCESSORS% EQU 1 ( set coreHalf=1 ) else set /a coreHalf=%NUMBER_OF_PROCESSORS%/2
-if %coresINI%==0 (
+if [0]==[%coresINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1301,7 +1311,7 @@ for /l %%a in (1,1,%cpuCores%) do set cpuCount=%%a
 if "%cpuCount%"=="" GOTO numCores
 if %deleteINI%==1 echo.cores=^%cpuCount%>>%ini%
 
-if %deleteSourceINI%==0 (
+if [0]==[%deleteSourceINI%] (
 :delete
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
@@ -1324,7 +1334,7 @@ if %deleteS% GTR 2 GOTO delete
 if %deleteINI%==1 echo.deleteSource=^%deleteS%>>%ini%
 
 :stripEXE
-if %stripINI%==0 (
+if [0]==[%stripINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1346,7 +1356,7 @@ if %stripF% GTR 2 GOTO stripEXE
 if %deleteINI%==1 echo.strip=^%stripF%>>%ini%
 
 :packEXE
-if %packINI%==0 (
+if [0]==[%packINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1372,7 +1382,7 @@ if %packF% GTR 2 GOTO packEXE
 if %deleteINI%==1 echo.pack=^%packF%>>%ini%
 
 :logging
-if %loggingINI%==0 (
+if [0]==[%loggingINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1394,32 +1404,32 @@ if %loggingF%==2 set "logging=n"
 if %loggingF% GTR 2 GOTO logging
 if %deleteINI%==1 echo.logging=^%loggingF%>>%ini%
 
-:autouploadlogs
-if %autouploadlogsINI%==0 (
-    echo -------------------------------------------------------------------------------
-    echo -------------------------------------------------------------------------------
-    echo.
-    echo. Automatically upload error logs to 0x0.st?
-    echo. 1 = Yes [recommended]
-    echo. 2 = No
-    echo.
-    echo This will upload logs.zip to 0x0.st for easy copy and pasting into github
-    echo issues. If you choose no, then uploading logs will be your responsibility and
-    echo no guarantees will be made for issues lacking logs.
-    echo.
-    echo -------------------------------------------------------------------------------
-    echo -------------------------------------------------------------------------------
-    set /P autouploadlogsF="Upload logs: "
-) else set autouploadlogsF=%autouploadlogsINI%
+@REM :autouploadlogs
+@REM if [0]==[%autouploadlogsINI%] (
+@REM     echo -------------------------------------------------------------------------------
+@REM     echo -------------------------------------------------------------------------------
+@REM     echo.
+@REM     echo. Automatically upload error logs to 0x0.st?
+@REM     echo. 1 = Yes [recommended]
+@REM     echo. 2 = No
+@REM     echo.
+@REM     echo This will upload logs.zip to 0x0.st for easy copy and pasting into github
+@REM     echo issues. If you choose no, then uploading logs will be your responsibility and
+@REM     echo no guarantees will be made for issues lacking logs.
+@REM     echo.
+@REM     echo -------------------------------------------------------------------------------
+@REM     echo -------------------------------------------------------------------------------
+@REM     set /P autouploadlogsF="Upload logs: "
+@REM ) else set autouploadlogsF=%autouploadlogsINI%
 
-if "%autouploadlogsF%"=="" GOTO autouploadlogs
-if %autouploadlogsF%==1 set "autouploadlogs=y"
-if %autouploadlogsF%==2 set "autouploadlogs=n"
-if %autouploadlogsF% GTR 2 GOTO autouploadlogs
-if %deleteINI%==1 echo.autouploadlogs=^%autouploadlogsF%>>%ini%
+@REM if "%autouploadlogsF%"=="" GOTO autouploadlogs
+@REM if %autouploadlogsF%==1 set "autouploadlogs=y"
+@REM if %autouploadlogsF%==2 set "autouploadlogs=n"
+@REM if %autouploadlogsF% GTR 2 GOTO autouploadlogs
+@REM if %deleteINI%==1 echo.autouploadlogs=^%autouploadlogsF%>>%ini%
 
 :updateSuite
-if %updateSuiteINI%==0 (
+if [0]==[%updateSuiteINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1442,7 +1452,7 @@ if %updateSuiteF% GTR 2 GOTO updateSuite
 if %deleteINI%==1 echo.updateSuite=^%updateSuiteF%>>%ini%
 
 :timeStamp
-if %timeStampINI%==0 (
+if [0]==[%timeStampINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1465,7 +1475,7 @@ if %timeStampF% GTR 2 GOTO timeStamp
 if %deleteINI%==1 echo.timeStamp=^%timeStampF%>>%ini%
 
 :ccache
-if %ccacheINI%==0 (
+if [0]==[%ccacheINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1488,7 +1498,7 @@ if %buildwithccache% GTR 2 GOTO ccache
 if %deleteINI%==1 echo.ccache=^%buildwithccache%>>%ini%
 
 :noMintty
-if %noMinttyINI%==0 (
+if [0]==[%noMinttyINI%] (
     echo -------------------------------------------------------------------------------
     echo -------------------------------------------------------------------------------
     echo.
@@ -1794,7 +1804,8 @@ set compileArgs=--cpuCount=%cpuCount% --build32=%build32% --build64=%build64% ^
 --vvc=%vvc% --uvg266=%uvg266% --vvenc=%vvenc% --vvdec=%vvdec% --jq=%jq% --jo=%jo% --dssim=%dssim% ^
 --avs2=%avs2% --timeStamp=%timeStamp% --noMintty=%noMintty% --ccache=%ccache% --svthevc=%svthevc% ^
 --svtav1=%svtav1% --svtvp9=%svtvp9% --xvc=%xvc% --vlc=%vlc% --libavif=%libavif% --jpegxl=%jpegxl% ^
---autouploadlogs=%autouploadlogs% --ffmpegPath=%ffmpegPath% 
+--ffmpegPath=%ffmpegPath%
+    @REM --autouploadlogs=%autouploadlogs%
     set "noMintty=%noMintty%"
     if %build64%==yes ( set "MSYSTEM=MINGW64" ) else set "MSYSTEM=MINGW32"
     set "MSYS2_PATH_TYPE=inherit"
