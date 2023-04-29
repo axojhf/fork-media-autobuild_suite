@@ -560,7 +560,7 @@ if [[ $jpegxl = y ]] || { [[ $ffmpeg != no ]] && enabled libjxl; }; then
 
     _deps=(libhwy.a libgflags.a)
     _check=(libjxl{{,_dec,_threads}.a,.pc} jxl/decode.h)
-    [[ $jpegxl = y ]] && _check+=(bin-global/{{c,d}jxl,cjpeg_hdr,jxlinfo}.exe)
+    [[ $jpegxl = y ]] && _check+=(bin-global/{{c,d}jxl,cjpegli,jxlinfo}.exe)
     if do_vcs "$SOURCE_REPO_LIBJXL"; then
         do_patch "https://raw.githubusercontent.com/m-ab-s/mabs-patches/master/libjxl/0001-brotli-add-ldflags.patch" am
         do_uninstall "${_check[@]}" include/jxl
@@ -1322,7 +1322,7 @@ fi
 _check=(libxavs.a xavs.{h,pc})
 if [[ $ffmpeg != no ]] && enabled libxavs && do_pkgConfig "xavs = 0.1." "0.1" &&
     do_vcs "$SOURCE_REPO_XAVS"; then
-    do_patch "https://github.com/Distrotech/xavs/pull/1.patch"
+    do_patch "https://github.com/Distrotech/xavs/pull/1.patch" am
     [[ -f libxavs.a ]] && log "distclean" make distclean
     do_uninstall "${_check[@]}"
     sed -i 's|"NUL"|"/dev/null"|g' configure
@@ -1339,6 +1339,7 @@ if [[ $bits = 32bit ]]; then
     do_removeOption --enable-libxavs2
 elif { [[ $avs2 = y ]] || { [[ $ffmpeg != no ]] && enabled libxavs2; }; } &&
     do_vcs "$SOURCE_REPO_XAVS2"; then
+    do_patch "https://raw.githubusercontent.com/m-ab-s/mabs-patches/master/xavs2/0001-encoder-cast-function-pointer-type.patch" am
     cd_safe build/linux
     [[ -f config.mak ]] && log "distclean" make distclean
     do_uninstall all "${_check[@]}"
@@ -1553,7 +1554,6 @@ if [[ $x264 != no ]] ||
         if [[ $standalone = y && $x264 =~ (full|fullv) ]]; then
             _check=("$LOCALDESTDIR"/opt/lightffmpeg/lib/pkgconfig/libav{codec,format}.pc)
             do_vcs "$ffmpegPath"
-            do_patch "https://patchwork.ffmpeg.org/series/8130/mbox/" am
             do_uninstall "$LOCALDESTDIR"/opt/lightffmpeg
             [[ -f config.mak ]] && log "distclean" make distclean
             create_build_dir light
@@ -1856,6 +1856,7 @@ if [[ $ffmpeg != no ]] && enabled liblensfun &&
     grep_or_sed liconv "$MINGW_PREFIX/lib/pkgconfig/glib-2.0.pc" 's;-lintl;& -liconv;g'
     do_patch "https://github.com/m-ab-s/mabs-patches/raw/master/lensfun/0001-CMake-exclude-mingw-w64-from-some-msvc-exclusive-thi.patch" am
     do_patch "https://github.com/m-ab-s/mabs-patches/raw/master/lensfun/0002-CMake-don-t-add-glib2-s-includes-as-SYSTEM-dirs.patch" am
+    do_patch "https://github.com/lensfun/lensfun/pull/1999.patch" am
     grep_or_sed Libs.private libs/lensfun/lensfun.pc.cmake '/Libs:/ a\Libs.private: -lstdc++'
     do_uninstall "bin-video/lensfun" "${_check[@]}"
     CFLAGS+=" -DGLIB_STATIC_COMPILATION" CXXFLAGS+=" -DGLIB_STATIC_COMPILATION" \
@@ -1898,7 +1899,7 @@ _check=(bin-video/vvenc{,FF}app.exe
 if [[ $bits = 64bit && $vvenc = y ]] &&
     do_vcs "$SOURCE_REPO_LIBVVENC"; then
     do_uninstall include/vvenc lib/cmake/vvenc "${_check[@]}"
-    do_cmakeinstall video -DVVENC_ENABLE_LINK_TIME_OPT=OFF
+    do_cmakeinstall video -DVVENC_ENABLE_LINK_TIME_OPT=OFF -DVVENC_INSTALL_FULLFEATURE_APP=ON
     do_checkIfExist
 fi
 
@@ -1909,7 +1910,7 @@ _check=(bin-video/vvdecapp.exe
 if [[ $bits = 64bit && $vvdec = y ]] &&
     do_vcs "$SOURCE_REPO_LIBVVDEC"; then
     do_uninstall include/vvdec lib/cmake/vvdec "${_check[@]}"
-    do_cmakeinstall video -DVVDEC_ENABLE_LINK_TIME_OPT=OFF
+    do_cmakeinstall video -DVVDEC_ENABLE_LINK_TIME_OPT=OFF -DVVDEC_INSTALL_VVDECAPP=ON
     do_checkIfExist
 fi
 
@@ -2144,8 +2145,6 @@ if [[ $ffmpeg != no ]]; then
             # remove redundant -L and -l flags from extralibs
             do_patch "https://raw.githubusercontent.com/m-ab-s/mabs-patches/master/ffmpeg/0001-configure-deduplicate-linking-flags.patch" am
         fi
-
-        do_patch "https://patchwork.ffmpeg.org/series/8130/mbox/" am
 
         _patches=$(git rev-list origin/master.. --count)
         [[ $_patches -gt 0 ]] &&
@@ -2588,7 +2587,6 @@ if [[ $cyanrip = y ]]; then
         old_PKG_CONFIG_PATH=$PKG_CONFIG_PATH
         _check=("$LOCALDESTDIR"/opt/cyanffmpeg/lib/pkgconfig/libav{codec,format}.pc)
         if flavor=cyan do_vcs "$ffmpegPath"; then
-            do_patch "https://patchwork.ffmpeg.org/series/8130/mbox/" am
             do_uninstall "$LOCALDESTDIR"/opt/cyanffmpeg
             [[ -f config.mak ]] && log "distclean" make distclean
             mapfile -t cyan_ffmpeg_opts < <(
