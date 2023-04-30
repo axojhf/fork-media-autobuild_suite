@@ -73,6 +73,7 @@ while true; do
     --svtvp9=* ) svtvp9=${1#*=} && shift ;;
     --xvc=* ) xvc=${1#*=} && shift ;;
     --vlc=* ) vlc=${1#*=} && shift ;;
+    --exitearly=* ) exitearly=${1#*=} && shift ;;
     # --autouploadlogs=* ) autouploadlogs=${1#*=} && shift ;;
     -- ) shift && break ;;
     -* ) echo "Error, unknown option: '$1'." && exit 1 ;;
@@ -86,6 +87,11 @@ source "$LOCALBUILDDIR"/media-suite_deps.sh
 
 # shellcheck source=media-suite_helper.sh
 source "$LOCALBUILDDIR"/media-suite_helper.sh
+
+if [[ $exitearly = EE1 ]]; then
+    do_simple_print -p '\n\t'"${orange}Exit due to env var MABS_EXIT_EARLY set to EE1"
+    exit 0
+fi
 
 do_simple_print -p "${orange}Warning: We will not accept any issues lacking any form of logs or logs.zip!$reset"
 
@@ -150,6 +156,10 @@ create_ab_pkgconfig
 create_cmake_toolchain
 create_ab_ccache
 pacman -S --noconfirm "$MINGW_PACKAGE_PREFIX-cmake" > /dev/null 2>&1
+
+# Global header fixups
+grep_and_sed '__declspec(__dllimport__)' "$MINGW_PREFIX"/include/gmp.h \
+        's|__declspec\(__dllimport__\)||g' "$MINGW_PREFIX"/include/gmp.h
 
 set_title "compiling global tools"
 do_simple_print -p '\n\t'"${orange}Starting $bits compilation of global tools${reset}"
@@ -483,6 +493,11 @@ if [[ $mediainfo = y || $bmx = y || $curl != n || $cyanrip = y ]] &&
     do_checkIfExist
 fi
 
+if [[ $exitearly = EE2 ]]; then
+    do_simple_print -p '\n\t'"${orange}Exit due to env var MABS_EXIT_EARLY set to EE2"
+    return
+fi
+
 if { { [[ $ffmpeg != no || $standalone = y ]] && enabled libtesseract; } ||
     { [[ $standalone = y ]] && enabled libwebp; }; }; then
     _check=(libglut.a glut.pc)
@@ -545,7 +560,7 @@ if [[ $jpegxl = y ]] || { [[ $ffmpeg != no ]] && enabled libjxl; }; then
 
     _deps=(libhwy.a libgflags.a)
     _check=(libjxl{{,_dec,_threads}.a,.pc} jxl/decode.h)
-    [[ $jpegxl = y ]] && _check+=(bin-global/{{c,d}jxl,cjpeg_hdr,jxlinfo}.exe)
+    [[ $jpegxl = y ]] && _check+=(bin-global/{{c,d}jxl,cjpegli,jxlinfo}.exe)
     if do_vcs "$SOURCE_REPO_LIBJXL"; then
         do_patch "https://raw.githubusercontent.com/m-ab-s/mabs-patches/master/libjxl/0001-brotli-add-ldflags.patch" am
         do_uninstall "${_check[@]}" include/jxl
@@ -653,6 +668,11 @@ if [[ $ffmpeg != no ]] && enabled libzimg &&
     do_autoreconf
     do_separate_confmakeinstall
     do_checkIfExist
+fi
+
+if [[ $exitearly = EE3 ]]; then
+    do_simple_print -p '\n\t'"${orange}Exit due to env var MABS_EXIT_EARLY set to EE3"
+    return
 fi
 
 set_title "compiling audio tools"
@@ -902,14 +922,17 @@ fi
 
 _check=(bin-audio/sox.exe sox.pc)
 _deps=(libsndfile.a opus.pc "$MINGW_PREFIX"/lib/libmp3lame.a)
-if [[ $sox = y ]] && do_pkgConfig "sox = 14.4.2" &&
-    do_wget_sf -h ba804bb1ce5c71dd484a102a5b27d0dd "sox/sox/14.4.2/sox-14.4.2.tar.bz2"; then
-    do_patch "https://raw.githubusercontent.com/m-ab-s/mabs-patches/master/sox/0001-sox_version-fold-function-into-sox_version_info.patch"
+if [[ $sox = y ]] && do_vcs "$SOURCE_REPO_SOX" sox; then
+    do_patch "https://raw.githubusercontent.com/m-ab-s/mabs-patches/master/sox/0001-sox_version-fold-function-into-sox_version_info.patch" am
     do_pacman_install libmad
     do_uninstall sox.{pc,h} bin-audio/{soxi,play,rec}.exe libsox.{l,}a "${_check[@]}"
+    do_autoreconf
     extracommands=()
+    extralibs=(-lshlwapi -lz)
     enabled libmp3lame || extracommands+=(--without-lame)
-    enabled_any libopencore-amr{wb,nb} || extracommands+=(--without-amr{wb,nb})
+    enabled_any libopencore-amr{wb,nb} &&
+        extralibs+=(-lvo-amrwbenc) ||
+        extracommands+=(--without-amr{wb,nb})
     if enabled libopus; then
         do_pacman_install opusfile
     else
@@ -923,12 +946,13 @@ if [[ $sox = y ]] && do_pkgConfig "sox = 14.4.2" &&
     enabled libvorbis || extracommands+=(--without-oggvorbis)
     hide_conflicting_libs
     sed -i 's|found_libgsm=yes|found_libgsm=no|g' configure
-    do_separate_conf --disable-symlinks LIBS='-lshlwapi -lz' "${extracommands[@]}"
+    do_separate_conf --disable-symlinks LIBS="-L$LOCALDESTDIR/lib ${extralibs[*]}" "${extracommands[@]}"
     do_make
     do_install src/sox.exe bin-audio/
     do_install sox.pc
     hide_conflicting_libs -R
     do_checkIfExist
+    unset extralibs extracommands
 fi
 unset _deps
 
@@ -996,6 +1020,11 @@ if { { [[ $ffmpeg != no ]] &&
     unset _mingw_patches
 fi
 
+if [[ $exitearly = EE4 ]]; then
+    do_simple_print -p '\n\t'"${orange}Exit due to env var MABS_EXIT_EARLY set to EE4"
+    return
+fi
+
 set_title "compiling video tools"
 do_simple_print -p '\n\t'"${orange}Starting $bits compilation of video tools${reset}"
 
@@ -1008,6 +1037,7 @@ if { [[ $rtmpdump = y ]] ||
     [[ $rtmpdump = y || $standalone = y ]] && _check+=(bin-video/rtmp{suck,srv,gw}.exe)
     do_uninstall include/librtmp "${_check[@]}"
     [[ -f librtmp/librtmp.a ]] && log "clean" make clean
+
     _rtmp_pkgver() {
         printf '%s-%s-%s_%s-%s-static' \
             "$(/usr/bin/grep -oP "(?<=^VERSION=).+" Makefile)" \
@@ -1292,7 +1322,7 @@ fi
 _check=(libxavs.a xavs.{h,pc})
 if [[ $ffmpeg != no ]] && enabled libxavs && do_pkgConfig "xavs = 0.1." "0.1" &&
     do_vcs "$SOURCE_REPO_XAVS"; then
-    do_patch "https://github.com/Distrotech/xavs/pull/1.patch"
+    do_patch "https://github.com/Distrotech/xavs/pull/1.patch" am
     [[ -f libxavs.a ]] && log "distclean" make distclean
     do_uninstall "${_check[@]}"
     sed -i 's|"NUL"|"/dev/null"|g' configure
@@ -1309,6 +1339,7 @@ if [[ $bits = 32bit ]]; then
     do_removeOption --enable-libxavs2
 elif { [[ $avs2 = y ]] || { [[ $ffmpeg != no ]] && enabled libxavs2; }; } &&
     do_vcs "$SOURCE_REPO_XAVS2"; then
+    do_patch "https://raw.githubusercontent.com/m-ab-s/mabs-patches/master/xavs2/0001-encoder-cast-function-pointer-type.patch" am
     cd_safe build/linux
     [[ -f config.mak ]] && log "distclean" make distclean
     do_uninstall all "${_check[@]}"
@@ -1335,7 +1366,6 @@ _check=(libuavs3d.a uavs3d.{h,pc})
 [[ $standalone = y ]] && _check+=(bin-video/uavs3dec.exe)
 if [[ $ffmpeg != no ]] && enabled libuavs3d &&
     do_vcs "$SOURCE_REPO_UAVS3D"; then
-    do_patch "https://github.com/uavs3/uavs3d/pull/29.patch"
     do_cmakeinstall
     [[ $standalone = y ]] && do_install uavs3dec.exe bin-video/
     do_checkIfExist
@@ -1826,11 +1856,13 @@ if [[ $ffmpeg != no ]] && enabled liblensfun &&
     grep_or_sed liconv "$MINGW_PREFIX/lib/pkgconfig/glib-2.0.pc" 's;-lintl;& -liconv;g'
     do_patch "https://github.com/m-ab-s/mabs-patches/raw/master/lensfun/0001-CMake-exclude-mingw-w64-from-some-msvc-exclusive-thi.patch" am
     do_patch "https://github.com/m-ab-s/mabs-patches/raw/master/lensfun/0002-CMake-don-t-add-glib2-s-includes-as-SYSTEM-dirs.patch" am
+    do_patch "https://github.com/lensfun/lensfun/pull/1999.patch" am
     grep_or_sed Libs.private libs/lensfun/lensfun.pc.cmake '/Libs:/ a\Libs.private: -lstdc++'
     do_uninstall "bin-video/lensfun" "${_check[@]}"
     CFLAGS+=" -DGLIB_STATIC_COMPILATION" CXXFLAGS+=" -DGLIB_STATIC_COMPILATION" \
         do_cmakeinstall -DBUILD_STATIC=on -DBUILD_{TESTS,LENSTOOL,DOC}=off \
-        -DINSTALL_HELPER_SCRIPTS=off -DCMAKE_INSTALL_DATAROOTDIR="$LOCALDESTDIR/bin-video"
+        -DINSTALL_HELPER_SCRIPTS=off -DCMAKE_INSTALL_DATAROOTDIR="$LOCALDESTDIR/bin-video" \
+        -DINSTALL_PYTHON_MODULE=OFF
     do_checkIfExist
 fi
 
@@ -1867,7 +1899,7 @@ _check=(bin-video/vvenc{,FF}app.exe
 if [[ $bits = 64bit && $vvenc = y ]] &&
     do_vcs "$SOURCE_REPO_LIBVVENC"; then
     do_uninstall include/vvenc lib/cmake/vvenc "${_check[@]}"
-    do_cmakeinstall video -DVVENC_ENABLE_LINK_TIME_OPT=OFF
+    do_cmakeinstall video -DVVENC_ENABLE_LINK_TIME_OPT=OFF -DVVENC_INSTALL_FULLFEATURE_APP=ON
     do_checkIfExist
 fi
 
@@ -1878,7 +1910,7 @@ _check=(bin-video/vvdecapp.exe
 if [[ $bits = 64bit && $vvdec = y ]] &&
     do_vcs "$SOURCE_REPO_LIBVVDEC"; then
     do_uninstall include/vvdec lib/cmake/vvdec "${_check[@]}"
-    do_cmakeinstall video -DVVDEC_ENABLE_LINK_TIME_OPT=OFF
+    do_cmakeinstall video -DVVDEC_ENABLE_LINK_TIME_OPT=OFF -DVVDEC_INSTALL_VVDECAPP=ON
     do_checkIfExist
 fi
 
@@ -1923,6 +1955,11 @@ if { { [[ $ffmpeg != no ]] && enabled_any vulkan libplacebo; } ||
     unset _DeadSix27 _mabs _shinchiro
 fi
 
+if [[ $exitearly = EE5 ]]; then
+    do_simple_print -p '\n\t'"${orange}Exit due to env var MABS_EXIT_EARLY set to EE5"
+    return
+fi
+
 _check=(spirv_cross/spirv_cross_c.h spirv-cross.pc libspirv-cross.a)
 if { { [[ $mpv != n ]] && ! mpv_disabled libplacebo; } ||
      { [[ $mpv != n ]] && ! mpv_disabled spirv-cross; } ||
@@ -1946,8 +1983,35 @@ if { { [[ $mpv != n ]]  && ! mpv_disabled libplacebo; } ||
     do_checkIfExist
 fi
 
+_check=(shaderc/shaderc.h libshaderc_combined.a)
+    if ! mpv_disabled shaderc &&
+        do_vcs "$SOURCE_REPO_SHADERC"; then
+        do_patch "https://raw.githubusercontent.com/m-ab-s/mabs-patches/master/shaderc/0001-third_party-set-INSTALL-variables-as-cache.patch" am
+        do_patch "https://raw.githubusercontent.com/m-ab-s/mabs-patches/master/shaderc/0002-shaderc_util-add-install.patch" am
+        do_uninstall "${_check[@]}" include/shaderc include/libshaderc_util
+
+        cd third_party
+
+        do_vcs_local "$SOURCE_REPO_GLSLANG" glslang
+        do_vcs_local "$SOURCE_REPO_SPIRV_TOOLS" spirv-tools
+        do_vcs_local "$SOURCE_REPO_SPIRV_HEADERS" spirv-headers
+        do_vcs_local "$SOURCE_REPO_SPIRV_CROSS" spirv-cross
+
+        cd ..
+
+        # fix python indentation errors from non-existant code review
+        grep -ZRlP --include="*.py" '\t' third_party/spirv-tools/ | xargs -r -0 -n1 sed -i 's;\t;    ;g'
+
+        do_cmakeinstall -GNinja -DSHADERC_SKIP_{TESTS,EXAMPLES}=ON -DSHADERC_ENABLE_WERROR_COMPILE=OFF -DSKIP_{GLSLANG,SPIRV_TOOLS,GOOGLETEST}_INSTALL=ON -DSPIRV_HEADERS_SKIP_{INSTALL,EXAMPLES}=ON
+        do_checkIfExist
+        unset add_third_party
+    fi
+
+    file_installed -s shaderc.pc && file_installed -s shaderc_static.pc &&
+        mv "$(file_installed shaderc_static.pc)" "$(file_installed shaderc.pc)"
+
 _check=(libplacebo.{a,pc})
-_deps=(lib{vulkan,shaderc_combined}.a spirv-cross.pc)
+_deps=(lib{vulkan,shaderc_combined}.a spirv-cross.pc shaderc/shaderc.h)
 if { { [[ $mpv != n ]]  && ! mpv_disabled libplacebo; } ||
      { [[ $ffmpeg != no ]] && enabled libplacebo; } } &&
     do_vcs "$SOURCE_REPO_LIBPLACEBO"; then
@@ -1958,6 +2022,11 @@ if { { [[ $mpv != n ]]  && ! mpv_disabled libplacebo; } ||
     log -q "git.submodule" git submodule update --init --recursive
     do_mesoninstall -Dvulkan-registry="$LOCALDESTDIR/share/vulkan/registry/vk.xml" -Ddemos=false -Dd3d11=enabled
     do_checkIfExist
+fi
+
+if [[ $exitearly = EE6 ]]; then
+    do_simple_print -p '\n\t'"${orange}Exit due to env var MABS_EXIT_EARLY set to EE6"
+    return
 fi
 
 enabled openssl && hide_libressl
@@ -2247,6 +2316,10 @@ if [[ $mplayer = y ]] && check_mplayer_updates; then
     [[ -d ffmpeg/.git ]] && {
         git -C ffmpeg fetch -q origin
         git -C ffmpeg checkout -qf --no-track -B master origin/HEAD
+        (
+            cd ffmpeg || return
+            do_patch "https://patchwork.ffmpeg.org/series/8130/mbox/" am
+        )
     }
 
     grep_or_sed windows libmpcodecs/ad_spdif.c '/#include "mp_msg.h/ a\#include <windows.h>'
@@ -2321,10 +2394,25 @@ if [[ $mpv != n ]] && pc_exists libavcodec libavformat libswscale libavfilter; t
         do_vcs "$SOURCE_REPO_MUJS"; then
         do_uninstall bin-global/mujs.exe "${_check[@]}"
         log clean env -i PATH="$PATH" "$(command -v make)" clean
+        mujs_targets=(build/release/{mujs.pc,libmujs.a})
+        if [[ $standalone != n ]]; then
+            mujs_targets+=(build/release/mujs)
+            _check+=(bin-global/mujs.exe)
+            sed -i "s;-lreadline;$($PKG_CONFIG --libs readline);g" Makefile
+        fi
         extra_script pre make
         log "make" env -i PATH="$PATH" TEMP="${TEMP:-/tmp}" CPATH="${CPATH:-}" "$(command -v make)" \
-            install prefix="$LOCALDESTDIR" bindir="$LOCALDESTDIR/bin-global"
+            "${mujs_targets[@]}" prefix="$LOCALDESTDIR" bindir="$LOCALDESTDIR/bin-global"
         extra_script post make
+        extra_script pre install
+        [[ $standalone != n ]] && do_install build/release/mujs "$LOCALDESTDIR/bin-global"
+        do_install build/release/mujs.pc lib/pkgconfig/
+        do_install build/release/libmujs.a lib/
+        do_install mujs.h include/
+        extra_script post install
+        grep_or_sed "Requires.private:" "$LOCALDESTDIR/lib/pkgconfig/mujs.pc" \
+            's;Version:.*;&\nRequires.private: readline;'
+        unset mujs_targets
         do_checkIfExist
     fi
 
@@ -2338,43 +2426,6 @@ if [[ $mpv != n ]] && pc_exists libavcodec libavformat libswscale libavfilter; t
         do_checkIfExist
     fi
 
-    _check=(shaderc/shaderc.h libshaderc_combined.a)
-    if ! mpv_disabled shaderc &&
-        do_vcs "$SOURCE_REPO_SHADERC"; then
-        do_patch "https://raw.githubusercontent.com/m-ab-s/mabs-patches/master/shaderc/0001-third_party-set-INSTALL-variables-as-cache.patch" am
-        do_patch "https://raw.githubusercontent.com/m-ab-s/mabs-patches/master/shaderc/0002-shaderc_util-add-install.patch" am
-        do_uninstall "${_check[@]}" include/shaderc include/libshaderc_util
-
-        add_third_party() {
-            local repo=$1
-            local name=$2
-            [[ ! $name ]] && name=${repo##*/} && name=${name%.*}
-            local dest=third_party/$name
-
-            if [[ -d $dest/.git ]]; then
-                log "$name-reset" git -C "$dest" reset --hard "@{u}"
-                log "$name-pull" git -C "$dest" pull
-            else
-                log "$name-clone" git clone --depth 1 "$repo" "$dest"
-            fi
-        }
-
-        add_third_party "$SOURCE_REPO_GLSLANG"
-        add_third_party "$SOURCE_REPO_SPIRV_TOOLS" spirv-tools
-        add_third_party "$SOURCE_REPO_SPIRV_HEADERS" spirv-headers
-        add_third_party "$SOURCE_REPO_SPIRV_CROSS" spirv-cross
-
-        # fix python indentation errors from non-existant code review
-        grep -ZRlP --include="*.py" '\t' third_party/spirv-tools/ | xargs -r -0 -n1 sed -i 's;\t;    ;g'
-
-        do_cmakeinstall -GNinja -DSHADERC_SKIP_{TESTS,EXAMPLES}=ON -DSHADERC_ENABLE_WERROR_COMPILE=OFF -DSKIP_{GLSLANG,SPIRV_TOOLS,GOOGLETEST}_INSTALL=ON -DSPIRV_HEADERS_SKIP_{INSTALL,EXAMPLES}=ON
-        do_checkIfExist
-        unset add_third_party
-    fi
-
-    file_installed -s shaderc.pc && file_installed -s shaderc_static.pc &&
-        mv "$(file_installed shaderc_static.pc)" "$(file_installed shaderc.pc)"
-
     _check=()
     ! mpv_disabled cplayer && _check+=(bin-video/mpv.{exe,com})
     mpv_enabled libmpv-shared && _check+=(bin-video/mpv-2.dll)
@@ -2386,7 +2437,7 @@ if [[ $mpv != n ]] && pc_exists libavcodec libavformat libswscale libavfilter; t
 
         log bootstrap /usr/bin/python bootstrap.py
         if [[ -d build ]]; then
-            /usr/bin/python waf distclean >/dev/null 2>&1
+            WAF_NO_PREFORK=1 /usr/bin/python waf distclean >/dev/null 2>&1
             do_uninstall bin-video/mpv{.exe,-2.dll}.debug "${_check[@]}"
         fi
 
@@ -2438,6 +2489,7 @@ if [[ $mpv != n ]] && pc_exists libavcodec libavformat libswscale libavfilter; t
             RST2HTML="${MINGW_PREFIX}/bin/rst2html" \
             RST2PDF="${MINGW_PREFIX}/bin/rst2pdf2" \
             PKG_CONFIG="$LOCALDESTDIR/bin/ab-pkg-config" \
+            WAF_NO_PREFORK=1 \
             log configure /usr/bin/python waf configure \
             "--prefix=$LOCALDESTDIR" "--bindir=$LOCALDESTDIR/bin-video" \
             "${MPV_OPTS[@]}"
@@ -2447,11 +2499,13 @@ if [[ $mpv != n ]] && pc_exists libavcodec libavformat libswscale libavfilter; t
         sed -r -i "s:LIBPATH_lib(ass|av(|device|filter)) = .*:$replace:g" ./build/c4che/_cache.py	
 
         extra_script pre build
-        log build /usr/bin/python waf -j "${cpuCount:-1}"
+        WAF_NO_PREFORK=1 \
+            log build /usr/bin/python waf -j "${cpuCount:-1}"
         extra_script post build
 
         extra_script pre install
-        log install /usr/bin/python waf -j1 install ||
+        WAF_NO_PREFORK=1 \
+            log install /usr/bin/python waf -j1 install ||
             log install /usr/bin/python waf -j1 install
         extra_script post install
 
@@ -2878,6 +2932,10 @@ run_builds() {
 
 cd_safe "$LOCALBUILDDIR"
 run_builds
+
+if [[ $exitearly = EE2 || $exitearly = EE3 || $exitearly = EE4 || $exitearly = EE5 || $exitearly = EE6 ]]; then
+    exit 0
+fi
 
 while [[ $new_updates = yes ]]; do
     ret=no

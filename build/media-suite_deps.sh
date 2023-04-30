@@ -20,7 +20,7 @@ SOURCE_REPO_FFMS2=https://github.com/FFMS/ffms2.git
 SOURCE_REPO_FFNVCODEC=https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
 SOURCE_REPO_FLAC=https://github.com/xiph/flac.git
 SOURCE_REPO_FLITE=https://github.com/festvox/flite.git
-SOURCE_REPO_FONTCONFIG=https://github.com/freedesktop/fontconfig.git#tag=LATEST
+SOURCE_REPO_FONTCONFIG=https://gitlab.freedesktop.org/fontconfig/fontconfig.git#tag=LATEST
 SOURCE_REPO_FREETYPE=https://github.com/freetype/freetype.git#tag=LATEST
 SOURCE_REPO_FREI0R=https://github.com/dyne/frei0r.git
 SOURCE_REPO_FRIBIDI=https://github.com/fribidi/fribidi.git
@@ -83,6 +83,7 @@ SOURCE_REPO_RUBBERBAND=https://github.com/m-ab-s/rubberband.git
 SOURCE_REPO_SDL2=https://github.com/libsdl-org/SDL.git#SDL2
 SOURCE_REPO_SHADERC=https://github.com/google/shaderc.git
 SOURCE_REPO_SNDFILE=https://github.com/libsndfile/libsndfile.git
+SOURCE_REPO_SOX=https://git.code.sf.net/p/sox/code
 SOURCE_REPO_SPEEX=https://github.com/xiph/speex.git
 SOURCE_REPO_SPIRV_CROSS=https://github.com/KhronosGroup/SPIRV-Cross.git
 SOURCE_REPO_SPIRV_HEADERS=https://github.com/KhronosGroup/SPIRV-Headers.git
